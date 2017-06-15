@@ -149,30 +149,22 @@ public class ClassHelper {
         }
     }
 
+    @Nullable
     public static Set<Class<?>> getSpiderFromJar(CheckFilter checkFilter) {
         Set<Class<?>> classSet = null;
         if (JobManagerConfig.jarMode) {
-            if (FileUtil.currentFile != null) {
-                try {
-                    JarFile jar = new JarFile(FileUtil.currentFile);
-                    classSet = ClassHelper.getJarFileClasses(jar, null, checkFilter);
+            try {
+                //取当前jar做检查
+                File file = new File(FileUtil.class.getProtectionDomain().
+                        getCodeSource().getLocation().toURI().getPath());
+                JarFile jar = new JarFile(file);
+                classSet = ClassHelper.getJarFileClasses(jar, null, checkFilter);
+            } catch (Exception e) {
 
-                } catch (IOException e) {
-
-                }
-            } else {
-                try {
-                    //取当前jar做检查
-                    File file = new File(FileUtil.class.getProtectionDomain().
-                            getCodeSource().getLocation().toURI().getPath());
-                    JarFile jar = new JarFile(file);
-                    classSet = ClassHelper.getJarFileClasses(jar, null, checkFilter);
-                } catch (Exception e) {
-
-                }
             }
+
         } else {
-            try {           //Fixme:library模式下 这段代码不起作用,应该改成业务的包名
+            try {   //Fixme:library模式下 这段代码不起作用,应该改成业务的包名
                 classSet = ClassHelper.getClasses("wuxian.me.spidersdk");
             } catch (IOException e) {
                 classSet = null;
@@ -181,13 +173,19 @@ public class ClassHelper {
         return classSet;
     }
 
+    private static Pattern packagePattern = null;
+
+    static {
+        String reg = "([0-9A-Za-z]+[.])+[0-9A-Za-z]+";
+        packagePattern = Pattern.compile(reg);
+    }
+
     public static boolean isPackageStringValid(String packageString) {
         if (packageString == null || packageString.length() == 0) {
             return false;
         }
-        String reg = "([0-9A-Za-z]+[.])+[0-9A-Za-z]+";
-        Pattern pattern = Pattern.compile(reg);
-        Matcher matcher = pattern.matcher(packageString);
+
+        Matcher matcher = packagePattern.matcher(packageString);
         return matcher.matches();
     }
 

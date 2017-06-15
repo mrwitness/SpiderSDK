@@ -8,6 +8,7 @@ import wuxian.me.spidercommon.log.LogManager;
 import wuxian.me.spidercommon.model.HttpUrlNode;
 import wuxian.me.spidercommon.model.Proxy;
 import wuxian.me.spidercommon.util.FileUtil;
+import wuxian.me.spidercommon.util.ShellUtil;
 import wuxian.me.spidercommon.util.SignalManager;
 import wuxian.me.spidersdk.BaseSpider;
 import wuxian.me.spidersdk.IJobManager;
@@ -47,10 +48,10 @@ public class DistributeJobManager implements IJobManager, HeartbeatManager.IHear
     private BlockHelper blockHelper = new BlockHelper();
 
     private AtomicBoolean isSwitchingIP = new AtomicBoolean(false);
-    private IPProxyTool ipProxyTool;//= new IPProxyTool();
+    private IPProxyTool ipProxyTool;
     private boolean inited = false;
 
-    //位于okHttpClient的缓存池中
+    //位于okHttpClient的发送对列
     private List<BaseSpider> dispatchedSpiderList = Collections.synchronizedList(new ArrayList<BaseSpider>());
 
     private SignalManager processManager = new SignalManager();

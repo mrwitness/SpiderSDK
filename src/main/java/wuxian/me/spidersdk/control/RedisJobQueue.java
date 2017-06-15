@@ -6,12 +6,13 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 import wuxian.me.spidercommon.log.LogManager;
 import wuxian.me.spidercommon.model.HttpUrlNode;
+import wuxian.me.spidercommon.util.FileUtil;
+import wuxian.me.spidercommon.util.ShellUtil;
 import wuxian.me.spidersdk.BaseSpider;
 import wuxian.me.spidersdk.JobManagerConfig;
 import wuxian.me.spidersdk.distribute.*;
 import wuxian.me.spidersdk.job.IJob;
 import wuxian.me.spidersdk.job.JobProvider;
-import wuxian.me.spidersdk.util.ShellUtil;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -33,6 +34,7 @@ public class RedisJobQueue implements IQueue {
 
     private Jedis jedis;
     private Gson gson;
+    private boolean started = false;
 
 
     public RedisJobQueue() {
@@ -40,7 +42,21 @@ public class RedisJobQueue implements IQueue {
     }
 
     public void init() {
+        if (started) {
+            return;
+        }
+        started = true;
+
         gson = new Gson();
+        String path = FileUtil.getCurrentPath() + "/util/shell/checkredisrunning";
+        if (!FileUtil.checkFileExist(path)) {
+            String shell = "redis-cli -h " + JobManagerConfig.redisIp + " -p "
+                    + JobManagerConfig.redisPort + " ping";
+            FileUtil.writeToFile(path, shell);
+        }
+        ShellUtil.chmod(path, 0777);
+
+
         boolean redisRunning = false;
         try {
             redisRunning = ShellUtil.isRedisServerRunning();

@@ -4,6 +4,8 @@ import okhttp3.*;
 import wuxian.me.spidercommon.log.LogManager;
 import wuxian.me.spidercommon.model.Proxy;
 import wuxian.me.spidercommon.util.FileUtil;
+import wuxian.me.spidercommon.util.IpPortUtil;
+import wuxian.me.spidercommon.util.ShellUtil;
 import wuxian.me.spidersdk.util.OkhttpProvider;
 import wuxian.me.spidersdk.JobManagerConfig;
 
@@ -11,10 +13,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-import static wuxian.me.spidersdk.util.ShellUtil.*;
+import static wuxian.me.spidercommon.util.ShellUtil.openTextEdit;
+import static wuxian.me.spidercommon.util.ShellUtil.textEditState;
 
 /**
  * Created by wuxian on 9/4/2017.
@@ -30,12 +31,8 @@ public class IPProxyTool {
     public static final String CUT = ";";
     public static final String SEPRATE = ":";
 
-    private static List<Proxy> ipPortList;
+    private static List<Proxy> ipPortList = new ArrayList<Proxy>();
     public Proxy currentProxy = null;
-
-    static {
-        ipPortList = new ArrayList<Proxy>();
-    }
 
     Request request = null;
 
@@ -51,12 +48,14 @@ public class IPProxyTool {
         }
         inited = true;
 
-        FileUtil.writeToFile(getOpenProxyShellPath(), "open -t " + getProxyFilePath());
+        String path = FileUtil.getCurrentPath() + "/util/shell/openproxy";
+        FileUtil.writeToFile(path, "open -t " + getProxyFilePath());
+        ShellUtil.chmod(path, 0777);
 
         HttpUrl.Builder urlBuilder = HttpUrl.parse("http://www.ip138.com/ip2city.asp").newBuilder();
         Headers.Builder builder = new Headers.Builder();
         builder.add("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36");
-        //CacheControl cc = new CacheControl.Builder().noCache().build();
+
         request = new Request.Builder()
                 .cacheControl(CacheControl.FORCE_NETWORK)
                 .headers(builder.build())
@@ -73,7 +72,7 @@ public class IPProxyTool {
             readProxyFromFile();
 
             currentProxy = forceSwitchProxyTillSuccess();
-            FileUtil.writeToFile(getProxyFilePath(), "");  //清空文件
+            FileUtil.writeToFile(getProxyFilePath(), "");
         }
     }
 
@@ -99,23 +98,6 @@ public class IPProxyTool {
         return JobManagerConfig.ipproxyFile;
     }
 
-    public static boolean isVaildIpPort(String[] ipport) {
-        if (ipport == null || ipport.length != 2) {
-            return false;
-        }
-
-        String reg1 = "[0-9]+[.][0-9]+[.][0-9]+[.][0-9]+";
-        Pattern pattern = Pattern.compile(reg1);
-        Matcher matcher = pattern.matcher(ipport[0]);
-        if (!matcher.matches()) {
-            return false;
-        }
-
-        String reg2 = "[0-9]+";
-        pattern = Pattern.compile(reg2);
-        matcher = pattern.matcher(ipport[1]);
-        return matcher.matches();
-    }
 
     private void readProxyFromFile() {
         if (!FileUtil.checkFileExist(getProxyFilePath())) {
@@ -128,7 +110,7 @@ public class IPProxyTool {
             if (proxys == null || proxys.length == 0) {
                 String[] proxy = content.split(SEPRATE);
                 if (proxy != null && proxy.length == 2) {
-                    if (isVaildIpPort(proxy)) {
+                    if (IpPortUtil.isVaildIpAndPort(proxy)) {
                         ipPortList.add(new Proxy(proxy[0], Integer.parseInt(proxy[1])));
                     }
                 }
@@ -139,7 +121,7 @@ public class IPProxyTool {
 
                 if (proxy != null && proxy.length == 2) {
                     LogManager.info("ip: " + proxy[0] + " port: " + proxy[1]);
-                    if (isVaildIpPort(proxy)) {
+                    if (IpPortUtil.isVaildIpAndPort(proxy)) {
                         LogManager.info("proxy is valid");
                         ipPortList.add(new Proxy(proxy[0], Integer.parseInt(proxy[1])));
                     }
@@ -217,7 +199,7 @@ public class IPProxyTool {
         if (countDownLatch.getCount() != 2) {
             return;
         }
-        //logger().info("Begin openShellAndEnsureProxyInputed");
+
         countDownLatch.countDown();
 
         new Thread() {
@@ -271,7 +253,6 @@ public class IPProxyTool {
             ;
         }
 
-        //logger().info("Return from openShellAndEnsureProxyInputed");
         countDownLatch = new CountDownLatch(2);
     }
 

@@ -12,10 +12,7 @@ import java.util.Random;
 /**
  * Created by wuxian on 1/4/2017.
  * <p>
- * 任务队列:这个任务队列是要进行的任务队列,
- * 任务一旦开始后会被踢出并被保存在@PlainJobManager.todoSpiderList中
- * <p>
- * 所有任务的状态会被更新到@JobMonitor
+ * 任务队列:这个任务队列是要进行的任务队列
  */
 public class JobQueue implements IQueue {
 

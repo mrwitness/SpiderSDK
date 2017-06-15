@@ -4,6 +4,7 @@ import com.sun.istack.internal.NotNull;
 import okhttp3.*;
 import wuxian.me.spidercommon.log.LogManager;
 import wuxian.me.spidercommon.model.Proxy;
+import wuxian.me.spidercommon.util.ShellUtil;
 import wuxian.me.spidercommon.util.SignalManager;
 import wuxian.me.spidersdk.BaseSpider;
 import wuxian.me.spidersdk.IJobManager;
@@ -16,7 +17,6 @@ import wuxian.me.spidersdk.control.*;
 import wuxian.me.spidersdk.job.IJob;
 import wuxian.me.spidersdk.job.JobProvider;
 import wuxian.me.spidersdk.util.OkhttpProvider;
-import wuxian.me.spidersdk.util.ShellUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -25,15 +25,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-
 /**
  * Created by wuxian on 9/4/2017.
- * <p>
- * 统筹管理所有job,
- * 1 管理WorkThread,JobQueue,JobMonitor
- * 2 负责处理job的成功失败 --> 失败是否重试
- * 3 负责处理ip被屏蔽 --> 是则停止现有job,切换ip,打监控日志,重启workThread等等
- * <p>
  */
 public class PlainJobManager implements HeartbeatManager.IHeartBeat,IJobManager {
 
@@ -48,13 +41,12 @@ public class PlainJobManager implements HeartbeatManager.IHeartBeat,IJobManager 
     private IPProxyTool ipProxyTool = new IPProxyTool();
     private AtomicBoolean isSwitchingIP = new AtomicBoolean(false);
 
-    //记录单次(单个ip)的spiderList --> OkHttpClient.enqueue的spider 还有一部分delayJob是没办法拿到的...
     private List<BaseSpider> todoSpiderList = Collections.synchronizedList(new ArrayList<BaseSpider>());
     private Dispatcher dispatcher = OkhttpProvider.getClient().dispatcher();
 
     private BlockHelper blockHelper = new BlockHelper();
     private AtomicInteger successJobNum = new AtomicInteger(0);
-    private long workThreadStartTime;//WorkThread线程开启的时间
+    private long workThreadStartTime;
 
     private boolean started = false;
 
@@ -77,19 +69,14 @@ public class PlainJobManager implements HeartbeatManager.IHeartBeat,IJobManager 
         onResume();
     }
 
-    //Todo:检查各个部件是否工作良好
     public void onUncaughtException(Thread t, Throwable e) {
 
     }
 
-    //Enable resume Non-Finished job
-    //Todo
     public void onResume() {
         ;
     }
 
-    //Enable resume Non-Finished job
-    //Todo
     public void onPause() {
         ;
     }
@@ -132,7 +119,7 @@ public class PlainJobManager implements HeartbeatManager.IHeartBeat,IJobManager 
         blockHelper.removeFail(runnable);
 
         IJob job = monitor.getJob(runnable);
-        if (job == null) { //SHOULD NEVER HAPPEN!
+        if (job == null) {
             return;
         }
         LogManager.info("Job Success: " + ((BaseSpider) (job.getRealRunnable())).name());
@@ -145,15 +132,11 @@ public class PlainJobManager implements HeartbeatManager.IHeartBeat,IJobManager 
         fail(runnable, fail, true);
     }
 
-    //注意实现线程安全
     public void fail(@NotNull Runnable runnable, @NotNull Fail fail, boolean retry) {
 
         if (isSwitchingIP.get()) {
             IJob job = monitor.getJob(runnable);
             if (job != null) {
-                //FailHelper不用做什么 因为已知被block
-                //TodoSpiderList不做remove 这些job会被重新丢入到jobQueue
-                //不用调job.fail来增加失败次数 因为没有意义
                 monitor.putJob(job, IJob.STATE_FAIL);
             }
         } else {
@@ -161,7 +144,7 @@ public class PlainJobManager implements HeartbeatManager.IHeartBeat,IJobManager 
 
             IJob job = monitor.getJob(runnable);
             if (job != null) {
-                todoSpiderList.remove(job);  //这里先remove掉 因为在OkHttpClient.enqueue的时候会被重新加入
+                todoSpiderList.remove(job);
 
                 job.fail(fail);
                 monitor.putJob(job, IJob.STATE_FAIL);
@@ -186,7 +169,7 @@ public class PlainJobManager implements HeartbeatManager.IHeartBeat,IJobManager 
         if (JobManagerConfig.enableSwitchProxy) {
             LogManager.info("We begin to switch IP...");
             doSwitchIp();
-        } else {        //被block后就停止了 --> 主要用于测试
+        } else {
             isSwitchingIP.set(true);
 
             LogManager.info("We will not switch IP ");
@@ -270,7 +253,6 @@ public class PlainJobManager implements HeartbeatManager.IHeartBeat,IJobManager 
         return ipProxyTool.ensureIpSwitched(proxy);
     }
 
-    //外部统一调这个...
     public boolean ipSwitched(final Proxy proxy) {
         return this.ipSwitched(proxy, false);
     }
@@ -291,7 +273,7 @@ public class PlainJobManager implements HeartbeatManager.IHeartBeat,IJobManager 
 
 
     public void onHeartBeatBegin() {
-        //暂时不用做什么
+
     }
 
     public void onHeartBeat(int time) {

@@ -46,7 +46,6 @@ public abstract class SpiderCallback implements Callback {
             try {
                 this.body = response.body().string();
             } catch (java.net.SocketException e) {
-                //Fixme: 偶现的bug Todo: 重试
                 return;
             }
 

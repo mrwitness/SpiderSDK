@@ -3,8 +3,6 @@ package wuxian.me.spidersdk;
 import wuxian.me.spidercommon.log.LogManager;
 import wuxian.me.spidercommon.util.FileUtil;
 import wuxian.me.spidersdk.distribute.ClassHelper;
-import wuxian.me.spidersdk.job.IJob;
-import wuxian.me.spidersdk.job.JobProvider;
 import wuxian.me.spidersdk.manager.JobManagerFactory;
 
 /**
@@ -17,12 +15,7 @@ public class Main {
     }
 
     public void init() {
-
         LogManager.info("Main_static Begin.");
-        LogManager.info("1 Find Current File Path.");
-
-        FileUtil.initWith(Main.class,"/conf/jobmanager.properties");
-        LogManager.info("Current Path." + FileUtil.getCurrentPath());
 
         JobManagerConfig.init();
 
@@ -42,11 +35,8 @@ public class Main {
     }
 
     public void start() {
-        NoneSpider spider = new NoneSpider();
-        IJob job = JobProvider.getJob();
-        job.setRealRunnable(spider);
-        JobManagerFactory.getJobManager().start();
-        JobManagerFactory.getJobManager().putJob(job);
+
+        //JobManagerFactory.getJobManager().start();
     }
 
     public static void main(String[] args) {
