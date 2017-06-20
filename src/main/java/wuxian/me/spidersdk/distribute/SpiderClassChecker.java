@@ -1,6 +1,7 @@
 package wuxian.me.spidersdk.distribute;
 
 import wuxian.me.spidercommon.model.HttpUrlNode;
+import wuxian.me.spidercommon.util.ClassHelper;
 import wuxian.me.spidersdk.BaseSpider;
 
 import java.io.IOException;

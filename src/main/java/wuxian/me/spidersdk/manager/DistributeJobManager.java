@@ -7,6 +7,7 @@ import okhttp3.Dispatcher;
 import wuxian.me.spidercommon.log.LogManager;
 import wuxian.me.spidercommon.model.HttpUrlNode;
 import wuxian.me.spidercommon.model.Proxy;
+import wuxian.me.spidercommon.util.ClassHelper;
 import wuxian.me.spidercommon.util.FileUtil;
 import wuxian.me.spidercommon.util.ShellUtil;
 import wuxian.me.spidercommon.util.SignalManager;
