@@ -66,7 +66,7 @@ public class RedisJobQueue implements IQueue {
         LogManager.info("Check RedisServer running: " + redisRunning);
 
         if (!redisRunning) {
-            throw new RedisConnectionException();
+            throw new JobManagerInitErrorException("Redis server not running");
         }
 
         LogManager.info("Init Jedis client...");

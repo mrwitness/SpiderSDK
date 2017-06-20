@@ -39,17 +39,10 @@ public class JobManagerConfig {
 
     public static boolean distributeMode;
 
-    public static String spiderIdentity;  //none,master,agent三种身份
-
-    public static boolean newSpideMode;
     public static boolean enableSeriazeSpider;
 
     public static String redisIp;
     public static long redisPort;
-
-    public static boolean jarMode;
-
-    public static boolean noMethodCheckingException;
 
     public static boolean enableSwitchProxy;
 
@@ -57,7 +50,7 @@ public class JobManagerConfig {
 
     public static boolean enableScheduleImmediately;
 
-    public static int jobNumToSleep;    //For @WorkingThread
+    public static int jobNumToSleep;
 
     public static int jobSleepTimeToSleep;
 
@@ -87,8 +80,6 @@ public class JobManagerConfig {
     public static boolean enableInitProxyFromFile;
 
     public static int everyProxyTryTime;
-
-    public static boolean enableRadomInsertJob;
 
     public static boolean enableInsertDuplicateJob;
 
@@ -158,8 +149,6 @@ public class JobManagerConfig {
 
         enableSeriazeSpider = parse(pro, "enableSeriazeSpider", false);
 
-        newSpideMode = parse(pro, "newSpideMode", true);
-
         okhttpClientSocketReadTimeout = parse(pro, "okhttpClientSocketReadTimeout", (long) 10 * 1000);
 
         shellCheckProxyFileSleepTime = parse(pro, "shellCheckProxyFileSleepTime", (long) 1000 * 10);
@@ -173,8 +162,6 @@ public class JobManagerConfig {
         enableInitProxyFromFile = parse(pro, "enableInitProxyFromFile", false);
 
         everyProxyTryTime = parse(pro, "everyProxyTryTime", 4);
-
-        enableRadomInsertJob = parse(pro, "enableRadomInsertJob", false);
 
         enableInsertDuplicateJob = parse(pro, "enableInsertDuplicateJob", false);
 
@@ -203,34 +190,16 @@ public class JobManagerConfig {
         redisIp = parse(pro, "redisIp", "127.0.0.1");
         redisPort = parse(pro, "redisPort", (long) 6379);
 
-        noMethodCheckingException = parse(pro, "noMethodCheckingException", false);
-
-        jarMode = parse(pro, "jarMode", true);
-
         distributeMode = parse(pro, "distributeMode", false);
-        spiderIdentity = parse(pro, "spiderIdentity", "none");
 
         spiderScan = parse(pro, "spiderScan", (String) null);
 
         enableProxyHeartbeat = parse(pro, "enableProxyHeartbeat", true);
 
-        //只有三种身份
-        if (!spiderIdentity.equals("none")) {
-            if (!spiderIdentity.equals("master") && !spiderIdentity.equals("agent")) {
-                spiderIdentity = "none";
-            }
-        }
-
         if (distributeMode) {
             LogManager.info("Current SpiderMode: distributed");
         } else {
             LogManager.info("Current SpiderMode: single");
-        }
-
-        if (jarMode) {
-            LogManager.info("Current RunningMode: jar");
-        } else {
-            LogManager.info("Current RunningMode: ide");
         }
 
     }

@@ -1,9 +1,7 @@
 package wuxian.me.spidersdk.manager;
 
-import com.sun.istack.internal.NotNull;
 import wuxian.me.spidersdk.IJobManager;
 import wuxian.me.spidersdk.JobManagerConfig;
-import wuxian.me.spidersdk.distribute.ClassHelper;
 
 /**
  * Created by wuxian on 18/5/2017.
@@ -11,8 +9,8 @@ import wuxian.me.spidersdk.distribute.ClassHelper;
  * 根据配置文件的选项给工作模式不同的jobmanager
  * 1 单机模式
  * 2 分布式(没有身份)
- * 3 分布式下的master  --> 未实现
- * 4 分布式下的agent   --> 未实现
+ * 3 分布式下的master
+ * 4 分布式下的agent
  */
 public class JobManagerFactory {
 
@@ -70,13 +68,7 @@ public class JobManagerFactory {
             }
 
             return getNormalJobManager();
-
         }
-    }
-
-    //Called by biz service
-    public static void initCheckFilter(@NotNull ClassHelper.CheckFilter filter) {
-        ((DistributeJobManager) getNormalJobManager()).setSpiderChecker(filter);
     }
 
 }

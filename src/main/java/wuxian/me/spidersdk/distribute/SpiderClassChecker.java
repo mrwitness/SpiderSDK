@@ -2,7 +2,6 @@ package wuxian.me.spidersdk.distribute;
 
 import wuxian.me.spidercommon.model.HttpUrlNode;
 import wuxian.me.spidersdk.BaseSpider;
-import wuxian.me.spidersdk.JobManagerConfig;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -40,17 +39,10 @@ public class SpiderClassChecker {
             clazz.asSubclass(BaseSpider.class);
             Method method1 = clazz.getMethod("toUrlNode", clazz);
             if (!(method1.getDeclaringClass().getSimpleName().equals(clazz.getSimpleName()))) {
-                //if (!JobManagerConfig.noMethodCheckingException) {
-                //    throw new MethodCheckException();
-                //}
-
                 method1 = null;
             }
             Method method = clazz.getMethod("fromUrlNode", HttpUrlNode.class);
             if (!(method.getDeclaringClass().getSimpleName().equals(clazz.getSimpleName()))) {
-                //if (!JobManagerConfig.noMethodCheckingException) {
-                //    throw new MethodCheckException();
-                //}
                 method = null;
             }
 
@@ -65,9 +57,7 @@ public class SpiderClassChecker {
         } catch (ClassCastException e) {
 
         } catch (NoSuchMethodException e) {
-            if (!JobManagerConfig.noMethodCheckingException) {
-                throw new MethodCheckException();
-            }
+
         }
 
         return ret;

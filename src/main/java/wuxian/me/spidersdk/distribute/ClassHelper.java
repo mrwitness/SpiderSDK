@@ -149,29 +149,7 @@ public class ClassHelper {
         }
     }
 
-    @Nullable
-    public static Set<Class<?>> getSpiderFromJar(CheckFilter checkFilter) {
-        Set<Class<?>> classSet = null;
-        if (JobManagerConfig.jarMode) {
-            try {
-                //取当前jar做检查
-                File file = new File(FileUtil.class.getProtectionDomain().
-                        getCodeSource().getLocation().toURI().getPath());
-                JarFile jar = new JarFile(file);
-                classSet = ClassHelper.getJarFileClasses(jar, null, checkFilter);
-            } catch (Exception e) {
 
-            }
-
-        } else {
-            try {   //Fixme:library模式下 这段代码不起作用,应该改成业务的包名
-                classSet = ClassHelper.getClasses("wuxian.me.spidersdk");
-            } catch (IOException e) {
-                classSet = null;
-            }
-        }
-        return classSet;
-    }
 
     private static Pattern packagePattern = null;
 

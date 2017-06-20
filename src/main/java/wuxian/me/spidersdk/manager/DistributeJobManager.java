@@ -34,7 +34,6 @@ public class DistributeJobManager implements IJobManager, HeartbeatManager.IHear
 
     private Gson gson = new Gson();
     private IQueue queue;
-    private ClassHelper.CheckFilter checkFilter;
     private WorkThread workThread = new WorkThread(this);
     private boolean started = false;
 
@@ -58,10 +57,6 @@ public class DistributeJobManager implements IJobManager, HeartbeatManager.IHear
 
     public List<BaseSpider> getDispatchedSpiderList() {
         return dispatchedSpiderList;
-    }
-
-    public void setSpiderChecker(@NotNull ClassHelper.CheckFilter filter) {
-        this.checkFilter = filter;
     }
 
     public DistributeJobManager() {
@@ -121,7 +116,7 @@ public class DistributeJobManager implements IJobManager, HeartbeatManager.IHear
         if (JobManagerConfig.spiderScan != null) {
             classSet = ClassHelper.getSpiderFromPackage(JobManagerConfig.spiderScan);
         } else {
-            classSet = ClassHelper.getSpiderFromJar(checkFilter);
+            throw new JobManagerInitErrorException("SpiderScan in jobmanager.properties isnot set");
         }
 
         if (classSet == null) {
@@ -298,10 +293,6 @@ public class DistributeJobManager implements IJobManager, HeartbeatManager.IHear
     }
 
     public void onResume() {
-        if (JobManagerConfig.newSpideMode) {  //全新抓取模式 返回
-            FileUtil.writeToFile(FileUtil.getCurrentPath() + JobManagerConfig.serializedSpiderFile, "");
-            return;
-        }
 
         if (!FileUtil.checkFileExist(FileUtil.getCurrentPath() + JobManagerConfig.serializedSpiderFile)) {
             FileUtil.writeToFile(FileUtil.getCurrentPath() + JobManagerConfig.serializedSpiderFile, "");

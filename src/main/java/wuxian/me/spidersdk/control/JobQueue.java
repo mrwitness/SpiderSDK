@@ -38,21 +38,8 @@ public class JobQueue implements IQueue {
             return true;
         }
         monitor.putJob(job, state);
+        queue.add(job);
 
-        synchronized (queue) {
-            if (JobManagerConfig.enableRadomInsertJob) {
-                if (queue.size() == 0) {
-                    queue.add(job);
-                } else {
-                    //随机插入
-                    int index = (int) random.nextDouble() * queue.size();
-                    queue.add(index, job);
-                }
-            } else {
-                queue.add(job);
-            }
-
-        }
         return true;
     }
 

@@ -4,7 +4,6 @@ import com.sun.istack.internal.NotNull;
 import okhttp3.Request;
 import wuxian.me.spidercommon.log.LogManager;
 import wuxian.me.spidercommon.model.HttpUrlNode;
-import wuxian.me.spidersdk.distribute.MethodCheckException;
 import wuxian.me.spidersdk.distribute.SpiderMethodManager;
 import wuxian.me.spidersdk.manager.JobManagerFactory;
 import wuxian.me.spidersdk.util.OkhttpProvider;
@@ -37,11 +36,7 @@ public abstract class BaseSpider implements Runnable {
     //Used in distributted mode
     public final HttpUrlNode toUrlNode() {
         if (!SpiderMethodManager.contains(getClass())) {
-            if (!JobManagerConfig.noMethodCheckingException) {
-                throw new MethodCheckException();
-            } else {
-                return null;
-            }
+            return null;
         }
 
         try {
