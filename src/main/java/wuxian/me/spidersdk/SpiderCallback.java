@@ -13,7 +13,6 @@ import java.io.IOException;
 
 /**
  * Created by wuxian on 10/4/2017.
- * <p>
  */
 public abstract class SpiderCallback implements Callback {
     private BaseSpider spider;
@@ -36,7 +35,6 @@ public abstract class SpiderCallback implements Callback {
 
     public SpiderCallback(@NotNull BaseSpider spider) {
         this.spider = spider;
-        //PlainJobManager.getInstance().onDispatch(spider);
     }
 
 
@@ -72,7 +70,7 @@ public abstract class SpiderCallback implements Callback {
 
             } else if (result == BaseSpider.RET_PARSING_ERR) {
 
-                JobManagerFactory.getJobManager().fail(spider, Fail.MAYBE_BLOCK, false);  //这个不放入重试队列
+                JobManagerFactory.getJobManager().fail(spider, Fail.MAYBE_BLOCK, false);
                 spider.serializeFullLog();
 
             } else if (result == BaseSpider.RET_MAYBE_BLOCK) {
