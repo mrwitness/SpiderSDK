@@ -1,6 +1,7 @@
 package wuxian.me.spidersdk;
 
 import wuxian.me.spidercommon.log.LogManager;
+import wuxian.me.spidersdk.manager.JobManagerFactory;
 
 /**
  * Created by wuxian on 12/5/2017.
@@ -18,7 +19,7 @@ public class Main {
     }
 
     public void start() {
-        //JobManagerFactory.getJobManager().start();
+        JobManagerFactory.getJobManager().start();
     }
 
     public static void main(String[] args) {

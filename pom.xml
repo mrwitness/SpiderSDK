@@ -61,6 +61,14 @@
             <systemPath>${project.basedir}/lib/SpiderCommon.jar</systemPath>
         </dependency>
 
+        <dependency>
+            <groupId>wuxian.me</groupId>
+            <artifactId>spidermaster</artifactId>
+            <version>1.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/SpiderMaster.jar</systemPath>
+        </dependency>
+
     </dependencies>
 
     <build>
