@@ -227,6 +227,10 @@ public class DistributeJobManager implements IJobManager, HeartbeatManager.IHear
         }
     }
 
+    protected Proxy getProxyTillSuccuss() {
+        return ipProxyTool.forceSwitchProxyTillSuccess();
+    }
+
     private void doSwitchIp() {
         isSwitchingIP.set(true);
         LogManager.info("Pausing WorkThread...");
@@ -236,7 +240,7 @@ public class DistributeJobManager implements IJobManager, HeartbeatManager.IHear
         dispatcher.cancelAll();
 
         heartbeatManager.stopHeartBeat();
-        Proxy proxy = ipProxyTool.forceSwitchProxyTillSuccess();
+        Proxy proxy = getProxyTillSuccuss();
 
         if(JobManagerConfig.reInitConfigAfterSwitchProxy) {
             JobManagerConfig.readConfigFromFile();  //Fixme: 这里修改的有些值是不能改的 比如说redis client
