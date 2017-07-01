@@ -48,7 +48,7 @@ public class DistributeJobManager implements IJobManager, HeartbeatManager.IHear
     private BlockHelper blockHelper = new BlockHelper();
 
     private AtomicBoolean isSwitchingIP = new AtomicBoolean(false);
-    private IPProxyTool ipProxyTool;
+    protected IPProxyTool ipProxyTool;
     private boolean inited = false;
 
     //位于okHttpClient的发送对列
@@ -187,7 +187,7 @@ public class DistributeJobManager implements IJobManager, HeartbeatManager.IHear
     }
 
     public IJob getJob() {
-        if(!started) {
+        if (!started) {
             return null;
         }
         IJob job = queue.getJob();
@@ -242,11 +242,11 @@ public class DistributeJobManager implements IJobManager, HeartbeatManager.IHear
         heartbeatManager.stopHeartBeat();
         Proxy proxy = getProxyTillSuccuss();
 
-        if(JobManagerConfig.reInitConfigAfterSwitchProxy) {
+        if (JobManagerConfig.reInitConfigAfterSwitchProxy) {
             JobManagerConfig.readConfigFromFile();  //Fixme: 这里修改的有些值是不能改的 比如说redis client
         }
 
-        if(JobManagerConfig.reReadCookieAfterSwitchProxy) {
+        if (JobManagerConfig.reReadCookieAfterSwitchProxy) {
             CookieManager.clear();
         }
 

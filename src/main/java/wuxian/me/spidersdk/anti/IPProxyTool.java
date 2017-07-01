@@ -104,7 +104,7 @@ public class IPProxyTool {
             return;
         }
         String content = FileUtil.readFromFile(getProxyFilePath());
-        LogManager.info("Content From ProxyFile "+content);
+        LogManager.info("Content From ProxyFile " + content);
         if (content != null) {
             String[] proxys = content.split(CUT);
             if (proxys == null || proxys.length == 0) {

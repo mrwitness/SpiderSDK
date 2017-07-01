@@ -101,12 +101,27 @@ public class AgentJobManger extends DistributeJobManager {
             ;
         }
 
-        if (tmpProxy != null) {
+        if (tmpProxy != null && ipProxyTool.ipSwitched(tmpProxy)) {
+            getProxyTime = 0;
             currentProxy = tmpProxy;
             return tmpProxy;
         }
 
-        //Todo make sure proxy is valid
+        getProxyTime++;
+
+        try {
+            getProxyTime = getProxyTime >= 12 ? 12 : getProxyTime;
+
+            LogManager.info("get valid proxy fail,sleep "
+                    + getProxyTime + " seconds then try again...");
+
+            Thread.sleep(getProxyTime * 10000);  //每失败多一次 多sleep 10s,最多休息120s
+        } catch (InterruptedException e) {
+            ;
+        }
+
         return getProxyTillSuccuss();  //if fail,try again
     }
+
+    private int getProxyTime = 0;
 }
