@@ -68,7 +68,7 @@ public abstract class BaseSpider implements Runnable {
     protected abstract SpiderCallback getCallback();
 
     public void run() {
-        LogManager.info("BaseSpider.run");
+        LogManager.info(getClass().getSimpleName() + ".run");
 
         Request request = getRequest();
         if (request == null || !JobManagerConfig.enableDispatchSpider) {

@@ -3,6 +3,8 @@ package wuxian.me.spidersdk.manager;
 import wuxian.me.spidercommon.log.LogManager;
 import wuxian.me.spidercommon.model.HttpUrlNode;
 import wuxian.me.spidercommon.model.Proxy;
+import wuxian.me.spidercommon.util.ProcessUtil;
+import wuxian.me.spidercommon.util.ShellUtil;
 import wuxian.me.spidermaster.biz.agent.SpiderAgent;
 import wuxian.me.spidermaster.biz.provider.Resource;
 import wuxian.me.spidermaster.framework.agent.request.IRpcCallback;
@@ -14,6 +16,7 @@ import wuxian.me.spidersdk.distribute.SpiderMethodManager;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by wuxian on 18/5/2017.
@@ -24,12 +27,18 @@ public class AgentJobManger extends DistributeJobManager {
 
     private SpiderAgent agent;
 
+    private boolean registerSuccess = false;
+
     @Override
     protected void init() {
+        registerSuccess = false;
         super.init();
 
+        LogManager.info("init spider agent");
         SpiderAgent.init();
         agent = new SpiderAgent();
+
+        LogManager.info("start spider agent");
         agent.start();
 
 
@@ -45,7 +54,41 @@ public class AgentJobManger extends DistributeJobManager {
 
             urlList.add(node);
         }
-        agent.registerToMaster(clazzList, urlList);
+
+        LogManager.info("spider agent begin to registToMaster");
+        final CountDownLatch countDownLatch = new CountDownLatch(1);
+        agent.registerToMaster(clazzList, urlList, new IRpcCallback() {
+            public void onSent() {
+
+            }
+
+            public void onResponseSuccess(RpcResponse rpcResponse) {
+
+                countDownLatch.countDown();
+
+                registerSuccess = true;
+            }
+
+            public void onResponseFail() {
+
+                countDownLatch.countDown();
+            }
+
+            public void onTimeout() {
+                countDownLatch.countDown();
+            }
+        });
+
+        try {
+            countDownLatch.await(10, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+
+        }
+
+        if (!registerSuccess) {
+            LogManager.error("seems agent fail to register to master ! we will shut down the whole process..."); //Fixme:这时候应该关闭程序?
+            ShellUtil.killProcessBy(ProcessUtil.getCurrentProcessId());
+        }
     }
 
     private Proxy currentProxy = null;
@@ -81,7 +124,7 @@ public class AgentJobManger extends DistributeJobManager {
                     Proxy proxy = GsonProvider.gson().fromJson((String) resource.data, Proxy.class);
                     if (proxy != null) {
 
-                        LogManager.info("getProxy: "+proxy.toString());
+                        LogManager.info("getProxy: " + proxy.toString());
                         tmpProxy = proxy;
                     }
                 }
@@ -105,7 +148,7 @@ public class AgentJobManger extends DistributeJobManager {
             ;
         }
 
-        if (tmpProxy != null ) {
+        if (tmpProxy != null) {
 
             int ensure = 0;
             boolean success = false;
@@ -114,7 +157,7 @@ public class AgentJobManger extends DistributeJobManager {
                 LogManager.info("Switch Proxy Fail Times: " + ensure);
             }
 
-            if(success) {
+            if (success) {
                 getProxyTime = 0;
                 currentProxy = tmpProxy;
                 return tmpProxy;

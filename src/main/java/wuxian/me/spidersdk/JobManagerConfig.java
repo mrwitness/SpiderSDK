@@ -2,7 +2,6 @@ package wuxian.me.spidersdk;
 
 import com.sun.istack.internal.NotNull;
 import com.sun.istack.internal.Nullable;
-import wuxian.me.spidercommon.log.LogManager;
 import wuxian.me.spidercommon.util.FileUtil;
 
 import java.io.FileInputStream;
@@ -195,12 +194,6 @@ public class JobManagerConfig {
         spiderScan = parse(pro, "spiderScan", (String) null);
 
         enableProxyHeartbeat = parse(pro, "enableProxyHeartbeat", true);
-
-        if (distributeMode) {
-            LogManager.info("Current SpiderMode: distributed");
-        } else {
-            LogManager.info("Current SpiderMode: single");
-        }
 
     }
 

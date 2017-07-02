@@ -3,6 +3,7 @@ package wuxian.me.spidersdk.manager;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.sun.istack.internal.NotNull;
+import com.sun.tools.javac.util.Log;
 import okhttp3.Dispatcher;
 import wuxian.me.spidercommon.log.LogManager;
 import wuxian.me.spidercommon.model.HttpUrlNode;
@@ -66,21 +67,21 @@ public class DistributeJobManager implements IJobManager, HeartbeatManager.IHear
 
     protected void init() {
 
-        LogManager.info("Begin To Init JobManager");
+        LogManager.info("in DistributeJobManger.init");
 
+        LogManager.info("init processManager");
         processManager.init();
 
+        LogManager.info("init shellutil");
         ShellUtil.init();   //check ipProxy需要用到shell因此要先初始化
 
-        LogManager.info("Begin To Collect Spiders...");
+        LogManager.info("begin to find valid sub spiders");
+
         checkAndColloectSubSpiders();
 
-        String clazzStr = SpiderMethodManager.getSpiderClassString();
-        if (clazzStr != null) {
-            LogManager.info(clazzStr);
-        }
+        LogManager.info(SpiderMethodManager.getSpiderClassString());
 
-        LogManager.info("Init RedisJobQueue...");
+        LogManager.info("init redis jobqueue");
         queue = new RedisJobQueue();
         queue.init();
 
@@ -91,28 +92,31 @@ public class DistributeJobManager implements IJobManager, HeartbeatManager.IHear
             }
         });
 
+        LogManager.info("init ipproxyTool");
         ipProxyTool = new IPProxyTool();
         ipProxyTool.init();
         if (ipProxyTool.currentProxy != null) {
+            LogManager.info("HeartbeatManager begin heartbeat");
             heartbeatManager.beginHeartBeat(ipProxyTool.currentProxy);
         }
-
-        LogManager.info("JobManager Inited");
 
         Thread.currentThread().setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
             public void uncaughtException(Thread t, Throwable e) {
                 LogManager.error("uncaughtExceptionHandler e:" + e.getMessage());
-                //onUncaughtException(t, e);
+
             }
         });
 
         onResume();
+
+        LogManager.info("DistributedJobManager.init END");
     }
 
     /**
      * 收集本jar包下的所有合法的@BaseSpider子类
      */
     private void checkAndColloectSubSpiders() {
+
         Set<Class<?>> classSet = null;
         if (JobManagerConfig.spiderScan != null) {
             classSet = ClassHelper.getSpiderFromPackage(JobManagerConfig.spiderScan);
@@ -205,11 +209,13 @@ public class DistributeJobManager implements IJobManager, HeartbeatManager.IHear
         }
 
         if (!started) {
+            LogManager.info("in DistributeJobManager.start");
+
             started = true;
             heartbeatManager.addHeartBeatCallback(this);
             monitor.recordStartTime();
 
-            LogManager.info("Starting WorkThread...");
+            LogManager.info("start workThread");
             workThread.start();
         }
     }
@@ -305,9 +311,12 @@ public class DistributeJobManager implements IJobManager, HeartbeatManager.IHear
 
         String spiderStr = FileUtil.readFromFile(FileUtil.getCurrentPath() + JobManagerConfig.serializedSpiderFile);
 
-        if (spiderStr == null) {
+        if (spiderStr == null || spiderStr.length() == 0) {
             return;
         }
+
+        LogManager.info("read serialized spiders from local file system: " + spiderStr);
+
         FileUtil.writeToFile(FileUtil.getCurrentPath() + JobManagerConfig.serializedSpiderFile, "");
         List<HttpUrlNode> nodeList = gson.fromJson(spiderStr, new TypeToken<List<HttpUrlNode>>() {
         }.getType());
@@ -316,9 +325,12 @@ public class DistributeJobManager implements IJobManager, HeartbeatManager.IHear
             return;
         }
 
+        LogManager.info("put back urlnode from spiders");
         for (HttpUrlNode urlNode : nodeList) {
+            LogManager.info(urlNode.toString());
             ((RedisJobQueue) queue).putJob(urlNode);
         }
+        LogManager.info("put back urlnodes finished");
     }
 
     public void onPause() {

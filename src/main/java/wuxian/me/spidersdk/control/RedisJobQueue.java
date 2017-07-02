@@ -36,7 +36,6 @@ public class RedisJobQueue implements IQueue {
     private Gson gson;
     private boolean started = false;
 
-
     public RedisJobQueue() {
 
     }
@@ -63,13 +62,19 @@ public class RedisJobQueue implements IQueue {
         } catch (IOException e) {
             ;
         }
-        LogManager.info("Check RedisServer running: " + redisRunning);
+
+        if (redisRunning) {
+            LogManager.info("redis server is running ");
+        } else {
+            LogManager.info("redis server is not running");
+        }
+
 
         if (!redisRunning) {
             throw new JobManagerInitErrorException("Redis server not running");
         }
 
-        LogManager.info("Init Jedis client...");
+        LogManager.info("init jedis client");
         jedis = new Jedis(JobManagerConfig.redisIp,
                 Ints.checkedCast(JobManagerConfig.redisPort));
 
@@ -79,7 +84,7 @@ public class RedisJobQueue implements IQueue {
             LogManager.error("JedisConnectionException e:" + e.getMessage());
         }
 
-        LogManager.info("RedisJobQueue Inited");
+        LogManager.info("redis jobqueue init END");
 
     }
 

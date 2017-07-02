@@ -53,14 +53,14 @@ public class SpiderMethodManager {
     public static String getSpiderClassString() {
         Set<Class> classSet = getSpiderClasses();
         if (classSet != null && classSet.size() != 0) {
-            StringBuilder clazzStr = new StringBuilder("We Got " + classSet.size() + " Spiders:{");
+            StringBuilder clazzStr = new StringBuilder("we find " + classSet.size() + " spiders:{ ");
             for (Class clazz : classSet) {
-                clazzStr.append(clazz.getName() + ",");
+                clazzStr.append(clazz.getSimpleName() + ",");
             }
-            clazzStr.append("}");
+            clazzStr.append(" }");
             return clazzStr.toString();
         } else {
-            return null;
+            return "fail to find any spiders";
         }
 
     }
