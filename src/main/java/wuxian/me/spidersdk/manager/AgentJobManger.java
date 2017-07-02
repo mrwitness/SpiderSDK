@@ -8,6 +8,7 @@ import wuxian.me.spidermaster.biz.provider.Resource;
 import wuxian.me.spidermaster.framework.agent.request.IRpcCallback;
 import wuxian.me.spidermaster.framework.common.GsonProvider;
 import wuxian.me.spidermaster.framework.rpc.RpcResponse;
+import wuxian.me.spidersdk.JobManagerConfig;
 import wuxian.me.spidersdk.distribute.SpiderMethodManager;
 
 import java.util.ArrayList;
@@ -63,6 +64,7 @@ public class AgentJobManger extends DistributeJobManager {
         tmpProxy = null;
         final CountDownLatch countDownLatch = new CountDownLatch(1);
 
+        LogManager.info("begin request proxy from master...");
         agent.requestProxy(new IRpcCallback() {
             public void onSent() {
 
@@ -74,10 +76,12 @@ public class AgentJobManger extends DistributeJobManager {
 
                 if (resource != null) {
 
-                    LogManager.info("AgentJobManager.onResponsSuccess " + resource.toString());
+                    LogManager.info("RequestProxy.onResponsSuccess " + resource.toString());
 
                     Proxy proxy = GsonProvider.gson().fromJson((String) resource.data, Proxy.class);
                     if (proxy != null) {
+
+                        LogManager.info("getProxy: "+proxy.toString());
                         tmpProxy = proxy;
                     }
                 }
@@ -101,10 +105,20 @@ public class AgentJobManger extends DistributeJobManager {
             ;
         }
 
-        if (tmpProxy != null && ipProxyTool.ipSwitched(tmpProxy)) {
-            getProxyTime = 0;
-            currentProxy = tmpProxy;
-            return tmpProxy;
+        if (tmpProxy != null ) {
+
+            int ensure = 0;
+            boolean success = false;
+            while (!(success = ipProxyTool.ipSwitched(tmpProxy)) && ensure < JobManagerConfig.everyProxyTryTime) {  //每个IP尝试三次
+                ensure++;
+                LogManager.info("Switch Proxy Fail Times: " + ensure);
+            }
+
+            if(success) {
+                getProxyTime = 0;
+                currentProxy = tmpProxy;
+                return tmpProxy;
+            }
         }
 
         getProxyTime++;
@@ -116,6 +130,7 @@ public class AgentJobManger extends DistributeJobManager {
                     + getProxyTime + " seconds then try again...");
 
             Thread.sleep(getProxyTime * 10000);  //每失败多一次 多sleep 10s,最多休息120s
+
         } catch (InterruptedException e) {
             ;
         }

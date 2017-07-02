@@ -5,12 +5,6 @@ import wuxian.me.spidersdk.JobManagerConfig;
 
 /**
  * Created by wuxian on 18/5/2017.
- * <p>
- * 根据配置文件的选项给工作模式不同的jobmanager
- * 1 单机模式
- * 2 分布式(没有身份)
- * 3 分布式下的master
- * 4 分布式下的agent
  */
 public class JobManagerFactory {
 
@@ -44,7 +38,7 @@ public class JobManagerFactory {
         return plainJobManager;
     }
 
-    private static IJobManager getNormalJobManager() {
+    private static IJobManager getDistrubeJobManager() {
         if (normalJobManager == null) {
             synchronized (JobManagerFactory.class) {
                 if (normalJobManager == null) {
@@ -56,18 +50,16 @@ public class JobManagerFactory {
     }
 
     public static IJobManager getJobManager() {
-        if(!JobManagerConfig.distributeMode){
-            return getPlainJobManager();
+
+        if (JobManagerConfig.isAgent) {
+            return getAgentJobManager();
+        }
+
+        if (JobManagerConfig.distributeMode) {
+            return getDistrubeJobManager();
         } else {
 
-            if (JobManagerConfig.isAgent) {
-                return getAgentJobManager();
-
-            } else if (JobManagerConfig.isMaster) {
-
-            }
-
-            return getNormalJobManager();
+            return getPlainJobManager();
         }
     }
 
