@@ -34,7 +34,6 @@ public class AgentJobManger extends DistributeJobManager {
         registerSuccess = false;
         super.init();
 
-        LogManager.info("init spider agent");
         SpiderAgent.init();
         agent = new SpiderAgent();
 
@@ -64,6 +63,7 @@ public class AgentJobManger extends DistributeJobManager {
 
             public void onResponseSuccess(RpcResponse rpcResponse) {
 
+                LogManager.info("spider agent registerToMaster success");
                 countDownLatch.countDown();
 
                 registerSuccess = true;
@@ -80,13 +80,14 @@ public class AgentJobManger extends DistributeJobManager {
         });
 
         try {
-            countDownLatch.await(10, TimeUnit.SECONDS);
+            countDownLatch.await(30, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
 
         }
 
         if (!registerSuccess) {
-            LogManager.error("seems agent fail to register to master ! we will shut down the whole process..."); //Fixme:这时候应该关闭程序?
+            LogManager.error("seems agent fail to register to master ! " +
+                    "we will shut down the whole process..."); //Fixme:这时候应该关闭程序?
             ShellUtil.killProcessBy(ProcessUtil.getCurrentProcessId());
         }
     }
