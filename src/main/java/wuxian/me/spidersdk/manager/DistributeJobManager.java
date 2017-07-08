@@ -100,12 +100,16 @@ public class DistributeJobManager implements IJobManager, HeartbeatManager.IHear
             heartbeatManager.beginHeartBeat(ipProxyTool.currentProxy);
         }
 
+        /*
         Thread.currentThread().setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
             public void uncaughtException(Thread t, Throwable e) {
-                LogManager.error("uncaughtExceptionHandler e:" + e.getMessage());
+
+                LogManager.error("uncaughtExceptionHandler thread:"+t.getName()+ " e:" + e.getMessage());
+                e.printStackTrace();
 
             }
         });
+        */
 
         onResume();
 
