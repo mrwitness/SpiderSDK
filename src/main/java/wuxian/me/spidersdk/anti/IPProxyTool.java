@@ -208,6 +208,19 @@ public class IPProxyTool {
         return proxy;
     }
 
+    public Proxy switchNextProxy(Proxy proxy) {
+        currentProxy = proxy;
+
+        System.setProperty("http.proxySet", "true");
+        System.getProperties().setProperty("http.proxyHost", proxy.ip);
+        System.getProperties().setProperty("http.proxyPort", String.valueOf(proxy.port));
+
+        System.getProperties().setProperty("https.proxyHost", proxy.ip);
+        System.getProperties().setProperty("https.proxyPort", String.valueOf(proxy.port));
+
+        return proxy;
+    }
+
     public boolean ensureIpSwitched(final Proxy proxy)
             throws InterruptedException, ExecutionException {
         FutureTask<String> future = getFuture();

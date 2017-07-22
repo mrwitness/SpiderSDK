@@ -151,6 +151,7 @@ public class AgentJobManger extends DistributeJobManager {
 
         if (tmpProxy != null) {
 
+            ipProxyTool.switchNextProxy(tmpProxy);
             int ensure = 0;
             boolean success = false;
             while (!(success = ipProxyTool.ipSwitched(tmpProxy)) && ensure < JobManagerConfig.everyProxyTryTime) {  //每个IP尝试三次
@@ -168,7 +169,7 @@ public class AgentJobManger extends DistributeJobManager {
         getProxyTime++;
 
         try {
-            getProxyTime = getProxyTime >= 3 ? 3 : getProxyTime;
+            getProxyTime = getProxyTime >= 1 ? 1 : getProxyTime;
 
             LogManager.info("get valid proxy fail,sleep "
                     + getProxyTime * 5 + " seconds then try again...");
