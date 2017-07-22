@@ -168,12 +168,12 @@ public class AgentJobManger extends DistributeJobManager {
         getProxyTime++;
 
         try {
-            getProxyTime = getProxyTime >= 12 ? 12 : getProxyTime;
+            getProxyTime = getProxyTime >= 3 ? 3 : getProxyTime;
 
             LogManager.info("get valid proxy fail,sleep "
-                    + getProxyTime + " seconds then try again...");
+                    + getProxyTime * 5 + " seconds then try again...");
 
-            Thread.sleep(getProxyTime * 10000);  //每失败多一次 多sleep 10s,最多休息120s
+            Thread.sleep(getProxyTime * 5 * 1000);  //每失败多一次 多sleep 10s,最多休息120s
 
         } catch (InterruptedException e) {
             ;

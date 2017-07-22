@@ -148,7 +148,7 @@ public class JobManagerConfig {
 
         enableSeriazeSpider = parse(pro, "enableSeriazeSpider", false);
 
-        okhttpClientSocketReadTimeout = parse(pro, "okhttpClientSocketReadTimeout", (long) 10 * 1000);
+        okhttpClientSocketReadTimeout = parse(pro, "okhttpClientSocketReadTimeout", (long) 60 * 1000);
 
         shellCheckProxyFileSleepTime = parse(pro, "shellCheckProxyFileSleepTime", (long) 1000 * 10);
 

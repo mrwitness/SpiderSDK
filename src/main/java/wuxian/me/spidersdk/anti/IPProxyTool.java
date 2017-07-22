@@ -10,6 +10,7 @@ import wuxian.me.spidersdk.util.OkhttpProvider;
 import wuxian.me.spidersdk.JobManagerConfig;
 
 import java.io.IOException;
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
@@ -52,9 +53,21 @@ public class IPProxyTool {
         FileUtil.writeToFile(path, "open -t " + getProxyFilePath());
         ShellUtil.chmod(path, 0777);
 
-        HttpUrl.Builder urlBuilder = HttpUrl.parse("http://www.ip138.com/ip2city.asp").newBuilder();
+        HttpUrl.Builder urlBuilder = HttpUrl.parse("http://city.ip138.com/ip2city.asp").newBuilder();
         Headers.Builder builder = new Headers.Builder();
         builder.add("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36");
+
+        builder.add("Host", "city.ip138.com");
+        builder.add("Cookie", "ASPSESSIONIDQSRBDCTB=KEBMKPPEHJPLEPEBEPJIBNKN");
+        builder.add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8");
+
+        //builder.add("Cache-Control","no-cache");
+        //builder.add("Connection","keep-alive");
+        builder.add("Connection", "close");
+        builder.add("Pragma", "no-cache");
+        builder.add("Accept-Encoding", "gzip, deflate");
+        builder.add("Accept-Language", "zh-CN,zh;q=0.8,en;q=0.6");
+        builder.add("Upgrade-Insecure-Requests", "1");
 
         request = new Request.Builder()
                 .cacheControl(CacheControl.FORCE_NETWORK)
@@ -76,7 +89,7 @@ public class IPProxyTool {
         }
     }
 
-    private FutureTask<String> getFuture() {
+    public FutureTask<String> getFuture() {
         return new FutureTask<String>(getCallable());
     }
 
@@ -85,9 +98,14 @@ public class IPProxyTool {
             public String call() throws Exception {
                 try {
                     Response response = OkhttpProvider.getClient().newCall(request).execute();
-
                     return response.body().string();
                 } catch (IOException e) {
+
+                    if (e instanceof SocketTimeoutException) {
+                        LogManager.error("callable SocketTimeoutException:" + e.getMessage());
+                    } else {
+                        LogManager.error("callable IOException" + e.getMessage());
+                    }
                     return null;
                 }
             }
@@ -135,8 +153,10 @@ public class IPProxyTool {
             boolean ret = ensureIpSwitched(proxy);
             return ret;
         } catch (InterruptedException e1) {
+            LogManager.error("ipSwitched interruptedException");
             return false;
         } catch (ExecutionException e) {
+            LogManager.error("ipSwitched executionException");
             return false;
         }
     }
@@ -164,6 +184,12 @@ public class IPProxyTool {
 
     }
 
+    public void putProxy(Proxy proxy) {
+        if (proxy != null) {
+            ipPortList.add(proxy);
+        }
+    }
+
     public Proxy switchNextProxy() {
         if (ipPortList.size() == 0) {
             return null;
@@ -187,8 +213,11 @@ public class IPProxyTool {
         FutureTask<String> future = getFuture();
         new Thread(future).start();
         if (future.get() == null) {
+            LogManager.error("future.get is null");
             return false;
         }
+
+        LogManager.info("returned html:" + future.get());
 
         boolean b = future.get().contains(proxy.ip);
         return b;
