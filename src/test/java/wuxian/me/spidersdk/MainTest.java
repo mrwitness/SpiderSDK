@@ -4,6 +4,7 @@ import org.junit.Test;
 import wuxian.me.spidercommon.log.LogManager;
 import wuxian.me.spidercommon.model.Proxy;
 import wuxian.me.spidersdk.anti.IPProxyTool;
+import wuxian.me.spidersdk.manager.DistributeJobManager;
 import wuxian.me.spidersdk.proxy.HandInputProxyMaker;
 import wuxian.me.spidersdk.proxy.IProxyMaker;
 
@@ -18,6 +19,13 @@ public class MainTest {
         JobManagerConfig.init();
         IProxyMaker proxyMaker = new HandInputProxyMaker();
         System.out.println(proxyMaker.makeUntilSuccess().toString());
+    }
+
+    @Test
+    public void testSpiderScan() {
+        JobManagerConfig.init();
+        JobManagerConfig.spiderScan = "wuxian.me.spidersdk.manager;wuxian.me.spidersdk.control";
+        new DistributeJobManager().checkAndColloectSubSpiders(JobManagerConfig.spiderScan);
     }
 
     @Test

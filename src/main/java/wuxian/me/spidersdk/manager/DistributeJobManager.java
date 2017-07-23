@@ -84,7 +84,7 @@ public class DistributeJobManager implements IJobManager, HeartbeatManager.IHear
 
         LogManager.info("begin to find valid sub spiders");
 
-        checkAndColloectSubSpiders();
+        checkAndColloectSubSpiders(JobManagerConfig.spiderScan);
 
         LogManager.info(SpiderMethodManager.getSpiderClassString());
 
@@ -108,17 +108,6 @@ public class DistributeJobManager implements IJobManager, HeartbeatManager.IHear
             heartbeatManager.beginHeartBeat(ipProxyTool.getCurrentProxy());
         }
 
-        /*
-        Thread.currentThread().setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
-            public void uncaughtException(Thread t, Throwable e) {
-
-                LogManager.error("uncaughtExceptionHandler thread:"+t.getName()+ " e:" + e.getMessage());
-                e.printStackTrace();
-
-            }
-        });
-        */
-
         onResume();
 
         LogManager.info("DistributedJobManager.init END");
@@ -127,16 +116,33 @@ public class DistributeJobManager implements IJobManager, HeartbeatManager.IHear
     /**
      * 收集本jar包下的所有合法的@BaseSpider子类
      */
-    private void checkAndColloectSubSpiders() {
+    public void checkAndColloectSubSpiders(String s) {
 
-        Set<Class<?>> classSet = null;
-        if (JobManagerConfig.spiderScan != null) {
-            classSet = ClassHelper.getSpiderFromPackage(JobManagerConfig.spiderScan);
+        Set<Class<?>> classSet = new HashSet<Class<?>>();
+        if (s != null) {
+
+            List<String> pkList = new ArrayList<String>();
+
+            if (!s.contains(";")) {
+                pkList.add(s);
+            } else {
+                String[] list = s.split(";");
+                for (int i = 0; i < list.length; i++) {
+                    pkList.add(list[i]);
+                }
+            }
+
+            for (String pk : pkList) {
+                Set<Class<?>> list = getSpidersUnder(pk);
+                list.removeAll(classSet);
+                classSet.addAll(list);
+            }
+
         } else {
             throw new JobManagerInitErrorException("SpiderScan in jobmanager.properties isnot set");
         }
 
-        if (classSet == null) {
+        if (classSet == null || classSet.size() == 0) {
             return;
         }
         for (Class<?> clazz : classSet) {
@@ -146,6 +152,10 @@ public class DistributeJobManager implements IJobManager, HeartbeatManager.IHear
             }
         }
 
+    }
+
+    private Set<Class<?>> getSpidersUnder(String packageName) {
+        return ClassHelper.getSpiderFromPackage(packageName);
     }
 
     public boolean ipSwitched(final Proxy proxy) {
@@ -250,7 +260,7 @@ public class DistributeJobManager implements IJobManager, HeartbeatManager.IHear
     }
 
     protected void switchProxyTillSuccuss() {
-        if(proxyMaker == null) {
+        if (proxyMaker == null) {
             proxyMaker = getProxyMaker();
         }
         boolean switchSuccess = false;
