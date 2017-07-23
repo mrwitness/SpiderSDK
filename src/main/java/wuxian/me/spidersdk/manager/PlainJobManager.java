@@ -13,6 +13,8 @@ import wuxian.me.spidersdk.anti.*;
 import wuxian.me.spidersdk.control.*;
 import wuxian.me.spidersdk.job.IJob;
 import wuxian.me.spidersdk.job.JobProvider;
+import wuxian.me.spidersdk.proxy.HandInputProxyMaker;
+import wuxian.me.spidersdk.proxy.IProxyMaker;
 import wuxian.me.spidersdk.util.CookieManager;
 import wuxian.me.spidersdk.util.JobManagerMonitor;
 import wuxian.me.spidersdk.util.OkhttpProvider;
@@ -28,6 +30,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class PlainJobManager implements HeartbeatManager.IHeartBeat, IJobManager, ProcessLifecycle {
 
+    private IProxyMaker proxyMaker;
     private IQueue queue;
     private WorkThread workThread = new WorkThread(this);
     private boolean started = false;
@@ -54,6 +57,11 @@ public class PlainJobManager implements HeartbeatManager.IHeartBeat, IJobManager
 
     }
 
+    @NotNull
+    protected IProxyMaker getProxyMaker() {
+        return new HandInputProxyMaker();
+    }
+
     private void init() {
 
         signalManager.registerOnSystemKill(new SignalManager.OnSystemKill() {
@@ -75,8 +83,8 @@ public class PlainJobManager implements HeartbeatManager.IHeartBeat, IJobManager
 
         ipProxyTool = new IPProxyTool();
         ipProxyTool.init();
-        if (ipProxyTool.currentProxy != null) {
-            heartbeatManager.beginHeartBeat(ipProxyTool.currentProxy);
+        if (ipProxyTool.getCurrentProxy() != null) {
+            heartbeatManager.beginHeartBeat(ipProxyTool.getCurrentProxy());
         }
 
         onResume();
@@ -205,6 +213,29 @@ public class PlainJobManager implements HeartbeatManager.IHeartBeat, IJobManager
         }
     }
 
+    protected void switchProxyTillSuccuss() {
+
+        if(proxyMaker == null) {  //lazy init
+            proxyMaker = getProxyMaker();
+        }
+
+        boolean switchSuccess = false;
+        do {
+            Proxy proxy = proxyMaker.makeUntilSuccess();
+            ipProxyTool.switchToProxy(proxy);
+
+            int ensure = 0;
+
+            while (!(switchSuccess = ipProxyTool.isIpSwitchedSuccess(proxy)) && ensure < JobManagerConfig.everyProxyTryTime) {  //每个IP尝试三次
+                ensure++;
+                LogManager.info("Switch Proxy Fail Times: " + ensure);
+            }
+
+        } while (!switchSuccess);
+
+        return;
+    }
+
     private void doSwitchIp() {
 
         isSwitchingIP.set(true);
@@ -218,7 +249,7 @@ public class PlainJobManager implements HeartbeatManager.IHeartBeat, IJobManager
 
         monitor.printAllJobStatus();  //监控用
 
-        Proxy proxy = ipProxyTool.forceSwitchProxyTillSuccess();
+        switchProxyTillSuccuss();
 
         if (JobManagerConfig.reInitConfigAfterSwitchProxy) {
             JobManagerConfig.readConfigFromFile();
@@ -232,7 +263,7 @@ public class PlainJobManager implements HeartbeatManager.IHeartBeat, IJobManager
             UserAgentManager.switchIndex();
         }
 
-        heartbeatManager.beginHeartBeat(proxy);
+        heartbeatManager.beginHeartBeat(ipProxyTool.getCurrentProxy());
 
         dispatcher.cancelAll();
         for (BaseSpider spider : dispatchedSpiderList) {
@@ -254,7 +285,10 @@ public class PlainJobManager implements HeartbeatManager.IHeartBeat, IJobManager
     }
 
     public boolean ipSwitched(final Proxy proxy) {
-        return ipProxyTool.currentProxy.equals(proxy);
+        if (ipProxyTool.getCurrentProxy() == null) {
+            return true;
+        }
+        return ipProxyTool.getCurrentProxy().equals(proxy);
     }
 
     public void onHeartBeatBegin() {

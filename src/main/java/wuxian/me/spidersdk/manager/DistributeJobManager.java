@@ -3,7 +3,6 @@ package wuxian.me.spidersdk.manager;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.sun.istack.internal.NotNull;
-import com.sun.tools.javac.util.Log;
 import okhttp3.Dispatcher;
 import wuxian.me.spidercommon.log.LogManager;
 import wuxian.me.spidercommon.model.HttpUrlNode;
@@ -22,6 +21,8 @@ import wuxian.me.spidersdk.control.WorkThread;
 import wuxian.me.spidersdk.distribute.*;
 import wuxian.me.spidersdk.job.IJob;
 import wuxian.me.spidersdk.job.JobProvider;
+import wuxian.me.spidersdk.proxy.HandInputProxyMaker;
+import wuxian.me.spidersdk.proxy.IProxyMaker;
 import wuxian.me.spidersdk.util.*;
 
 import java.util.*;
@@ -34,6 +35,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class DistributeJobManager implements IJobManager, HeartbeatManager.IHeartBeat, ProcessLifecycle {
 
+    protected IProxyMaker proxyMaker;
     private Gson gson = new Gson();
     private IQueue queue;
     private WorkThread workThread = new WorkThread(this);
@@ -63,6 +65,11 @@ public class DistributeJobManager implements IJobManager, HeartbeatManager.IHear
 
     public DistributeJobManager() {
 
+    }
+
+    @NotNull
+    protected IProxyMaker getProxyMaker() {
+        return new HandInputProxyMaker();
     }
 
     protected void init() {
@@ -95,9 +102,10 @@ public class DistributeJobManager implements IJobManager, HeartbeatManager.IHear
         LogManager.info("init ipproxyTool");
         ipProxyTool = new IPProxyTool();
         ipProxyTool.init();
-        if (ipProxyTool.currentProxy != null) {
+
+        if (ipProxyTool.getCurrentProxy() != null) {
             LogManager.info("HeartbeatManager begin heartbeat");
-            heartbeatManager.beginHeartBeat(ipProxyTool.currentProxy);
+            heartbeatManager.beginHeartBeat(ipProxyTool.getCurrentProxy());
         }
 
         /*
@@ -141,7 +149,11 @@ public class DistributeJobManager implements IJobManager, HeartbeatManager.IHear
     }
 
     public boolean ipSwitched(final Proxy proxy) {
-        return ipProxyTool.currentProxy.equals(proxy);
+
+        if (ipProxyTool.getCurrentProxy() == null) {
+            return true;
+        }
+        return ipProxyTool.getCurrentProxy().equals(proxy);
     }
 
     public void success(Runnable runnable) {
@@ -237,8 +249,25 @@ public class DistributeJobManager implements IJobManager, HeartbeatManager.IHear
         }
     }
 
-    protected Proxy getProxyTillSuccuss() {
-        return ipProxyTool.forceSwitchProxyTillSuccess();
+    protected void switchProxyTillSuccuss() {
+        if(proxyMaker == null) {
+            proxyMaker = getProxyMaker();
+        }
+        boolean switchSuccess = false;
+        do {
+            Proxy proxy = proxyMaker.makeUntilSuccess();
+            ipProxyTool.switchToProxy(proxy);
+
+            int ensure = 0;
+
+            while (!(switchSuccess = ipProxyTool.isIpSwitchedSuccess(proxy)) && ensure < JobManagerConfig.everyProxyTryTime) {  //每个IP尝试三次
+                ensure++;
+                LogManager.info("Switch Proxy Fail Times: " + ensure);
+            }
+
+        } while (!switchSuccess);
+
+        return;
     }
 
     private void doSwitchIp() {
@@ -250,7 +279,7 @@ public class DistributeJobManager implements IJobManager, HeartbeatManager.IHear
         dispatcher.cancelAll();
 
         heartbeatManager.stopHeartBeat();
-        Proxy proxy = getProxyTillSuccuss();
+        switchProxyTillSuccuss();
 
         if (JobManagerConfig.reInitConfigAfterSwitchProxy) {
             JobManagerConfig.readConfigFromFile();  //Fixme: 这里修改的有些值是不能改的 比如说redis client
@@ -264,7 +293,7 @@ public class DistributeJobManager implements IJobManager, HeartbeatManager.IHear
             UserAgentManager.switchIndex();
         }
 
-        heartbeatManager.beginHeartBeat(proxy);
+        heartbeatManager.beginHeartBeat(ipProxyTool.getCurrentProxy());
 
         dispatcher.cancelAll();
         for (BaseSpider spider : dispatchedSpiderList) {
