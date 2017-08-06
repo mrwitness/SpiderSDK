@@ -45,6 +45,8 @@ public class JobManagerConfig {
 
     public static boolean enableSwitchProxy;
 
+    public static boolean switchProxyWhenStart;
+
     public static boolean enableRetrySpider;
 
     public static boolean enableScheduleImmediately;
@@ -131,6 +133,8 @@ public class JobManagerConfig {
         isAgent = parse(pro, "isAgent", false);
 
         isMaster = parse(pro, "isMaster", false);
+
+        switchProxyWhenStart = parse(pro,"switchProxyWhenStart",false);
 
         switchAgentAfterSwitchProxy = parse(pro, "switchAgentAfterSwitchProxy", true);
 

@@ -199,11 +199,15 @@ public class DistributeJobManager implements IJobManager, HeartbeatManager.IHear
                 dealBlock();
             }
         }
-
     }
+
+    private List<IJob> delayJobs = new ArrayList<IJob>();
 
     public boolean putJob(@NotNull IJob job) {
         if (!started) {
+            synchronized (delayJobs) {
+                delayJobs.add(job);
+            }
             return false;
         }
         return queue.putJob(job, IJob.STATE_INIT);
@@ -211,6 +215,9 @@ public class DistributeJobManager implements IJobManager, HeartbeatManager.IHear
 
     public boolean putJob(@NotNull IJob job, boolean forceDispatch) {
         if (!started) {
+            synchronized (delayJobs) {
+                delayJobs.add(job);
+            }
             return false;
         }
         return queue.putJob(job, forceDispatch);
@@ -238,6 +245,13 @@ public class DistributeJobManager implements IJobManager, HeartbeatManager.IHear
             LogManager.info("in DistributeJobManager.start");
 
             started = true;
+            synchronized (delayJobs) {
+                if(delayJobs.size() != 0) {
+                    for(IJob job:delayJobs) {
+                        putJob(job);
+                    }
+                }
+            }
             heartbeatManager.addHeartBeatCallback(this);
             monitor.recordStartTime();
 

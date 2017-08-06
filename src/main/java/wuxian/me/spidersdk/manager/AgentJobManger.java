@@ -1,12 +1,13 @@
 package wuxian.me.spidersdk.manager;
 
-import com.sun.istack.internal.NotNull;
 import wuxian.me.spidercommon.log.LogManager;
 import wuxian.me.spidercommon.model.HttpUrlNode;
 import wuxian.me.spidercommon.model.Proxy;
 import wuxian.me.spidercommon.util.ProcessUtil;
 import wuxian.me.spidercommon.util.ShellUtil;
 import wuxian.me.spidermaster.biz.agent.SpiderAgent;
+import wuxian.me.spidermaster.biz.agent.provider.ProviderScanner;
+import wuxian.me.spidermaster.biz.provider.Resource;
 import wuxian.me.spidermaster.framework.agent.request.IRpcCallback;
 import wuxian.me.spidermaster.framework.rpc.RpcResponse;
 import wuxian.me.spidersdk.JobManagerConfig;
@@ -54,8 +55,7 @@ public class AgentJobManger extends DistributeJobManager {
         List<HttpUrlNode> urlList = new ArrayList<HttpUrlNode>(clazzList.size());
         for (int i = 0; i < clazzList.size(); i++) {
             HttpUrlNode node = new HttpUrlNode();
-            node.baseUrl = "hello_world";
-
+            node.baseUrl = "";   //Todo:没有意义
             urlList.add(node);
         }
 
@@ -94,6 +94,10 @@ public class AgentJobManger extends DistributeJobManager {
                     "we will shut down the whole process...");
             ShellUtil.killProcessBy(ProcessUtil.getCurrentProcessId());
         }
+
+        if(JobManagerConfig.enableSwitchProxy && JobManagerConfig.switchProxyWhenStart) {
+            switchProxyTillSuccuss();
+        }
     }
 
     public boolean ipSwitched(final Proxy proxy) {
@@ -105,6 +109,7 @@ public class AgentJobManger extends DistributeJobManager {
     }
 
 
+
     protected void switchProxyTillSuccuss() {
 
         if (proxyMaker == null) {
@@ -112,7 +117,18 @@ public class AgentJobManger extends DistributeJobManager {
         }
         boolean switchSuccess = false;
         do {
-            Proxy proxy = proxyMaker.makeUntilSuccess();
+
+            Proxy proxy = null;
+            Resource resource = ProviderScanner.provideResource("proxy");
+
+            if(resource != null) {
+                proxy = (Proxy) resource.data;
+            } else {
+                proxy = proxyMaker.make(2);
+            }
+            if(proxy == null) {
+                break;
+            }
             ipProxyTool.switchToProxy(proxy);
 
             int ensure = 0;
