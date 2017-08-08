@@ -9,6 +9,7 @@ import wuxian.me.spidermaster.biz.agent.SpiderAgent;
 import wuxian.me.spidermaster.biz.agent.provider.ProviderScanner;
 import wuxian.me.spidermaster.biz.provider.Resource;
 import wuxian.me.spidermaster.framework.agent.request.IRpcCallback;
+import wuxian.me.spidermaster.framework.common.GsonProvider;
 import wuxian.me.spidermaster.framework.rpc.RpcResponse;
 import wuxian.me.spidersdk.JobManagerConfig;
 import wuxian.me.spidersdk.distribute.SpiderMethodManager;
@@ -109,23 +110,33 @@ public class AgentJobManger extends DistributeJobManager {
     }
 
 
+    //如果本agent是一个Proxy的IProvider,那么先从本地拿
+    private Proxy getLocalProxyIfPossible() {
+        Resource resource = ProviderScanner.provideResource("proxy");
+        if(resource != null) {
+            try{
+                Proxy proxy = GsonProvider.gson().fromJson((String)resource.data,Proxy.class);
+
+                return proxy;
+            } catch (Exception e) {
+
+            }
+        }
+        return null;
+    }
 
     protected void switchProxyTillSuccuss() {
-
         if (proxyMaker == null) {
             proxyMaker = getProxyMaker();
         }
         boolean switchSuccess = false;
         do {
 
-            Proxy proxy = null;
-            Resource resource = ProviderScanner.provideResource("proxy");
-
-            if(resource != null) {
-                proxy = (Proxy) resource.data;
-            } else {
+            Proxy proxy = getLocalProxyIfPossible();
+            if(proxy == null) {
                 proxy = proxyMaker.make(2);
             }
+
             if(proxy == null) {
                 break;
             }
