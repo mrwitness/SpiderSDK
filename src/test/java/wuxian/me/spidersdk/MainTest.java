@@ -39,7 +39,7 @@ public class MainTest {
         tool.init();
 
         Proxy proxy = new Proxy("115.213.203.157", 808);
-        tool.switchToProxy(proxy);
+        //tool.switchToProxy(proxy);
         int ensure = 0;
         boolean success = false;
         while (!(success = tool.isIpSwitchedSuccess(proxy)) && ensure < 3) {

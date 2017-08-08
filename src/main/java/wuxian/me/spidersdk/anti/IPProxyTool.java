@@ -67,7 +67,21 @@ public class IPProxyTool {
             public String call() throws Exception {
                 try {
                     Response response = OkhttpProvider.getClient().newCall(request).execute();
-                    return response.body().string();
+                    String ret = null;//response.body().string();
+
+                    byte[] res = response.body().bytes();
+                    String encodeing = BytesCharsetDetector.getDetectedCharset(res);
+                    LogManager.info(encodeing);
+
+                    if(encodeing != null) {
+                        try{
+                            return new String(res,encodeing);
+                        } catch (Exception e) {
+                            return null;
+                        }
+                    }
+
+                    return null;
                 } catch (IOException e) {
 
                     if (e instanceof SocketTimeoutException) {
