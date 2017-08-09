@@ -144,8 +144,7 @@ public class AgentJobManger extends DistributeJobManager {
 
             int ensure = 0;
 
-            while (!(switchSuccess = ipProxyTool.isIpSwitchedSuccess(proxy))
-                    && ensure < JobManagerConfig.everyProxyTryTime) {  //每个IP尝试三次
+            while (ensure < JobManagerConfig.everyProxyTryTime && !(switchSuccess = ipProxyTool.isIpSwitchedSuccess(proxy))) {  //每个IP尝试三次
                 ensure++;
                 LogManager.info("Switch Proxy Fail Times: " + ensure);
             }

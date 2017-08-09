@@ -71,7 +71,6 @@ public class IPProxyTool {
 
                     byte[] res = response.body().bytes();
                     String encodeing = BytesCharsetDetector.getDetectedCharset(res);
-                    LogManager.info(encodeing);
 
                     if(encodeing != null) {
                         try{

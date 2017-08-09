@@ -58,8 +58,6 @@ public class RequestMasterProxyMaker implements IProxyMaker {
 
                     Proxy proxy = GsonProvider.gson().fromJson((String) resource.data, Proxy.class);
                     if (proxy != null) {
-
-                        LogManager.info("getProxy: " + proxy.toString());
                         tmpProxy = proxy;
                     }
                 }

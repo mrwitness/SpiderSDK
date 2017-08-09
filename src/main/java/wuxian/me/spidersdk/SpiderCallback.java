@@ -5,6 +5,7 @@ import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Response;
 import wuxian.me.spidercommon.log.LogManager;
+import wuxian.me.spidersdk.anti.BytesCharsetDetector;
 import wuxian.me.spidersdk.anti.Fail;
 import wuxian.me.spidersdk.manager.JobManagerFactory;
 import wuxian.me.spidersdk.manager.PlainJobManager;
@@ -42,7 +43,19 @@ public abstract class SpiderCallback implements Callback {
         this.response = response;
         if (response.body() != null) {
             try {
-                this.body = response.body().string();
+                byte[] bytes = response.body().bytes();
+                String encodeing = BytesCharsetDetector.getDetectedCharset(bytes);
+
+                if(encodeing == null) {
+                    encodeing = BytesCharsetDetector.getCharsetByResponseContentType(response.header("content-type"));
+                }
+
+                if(encodeing != null) {
+                    this.body = new String(bytes,encodeing);
+                } else {
+                    return;  //TODO:can't decode page
+                }
+
             } catch (java.net.SocketException e) {
                 return;
             }
