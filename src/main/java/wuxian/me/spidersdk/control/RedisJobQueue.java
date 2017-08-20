@@ -2,6 +2,7 @@ package wuxian.me.spidersdk.control;
 
 import com.google.common.primitives.Ints;
 import com.google.gson.Gson;
+import com.sun.istack.internal.Nullable;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 import wuxian.me.spidercommon.log.LogManager;
@@ -28,7 +29,6 @@ public class RedisJobQueue implements IQueue {
 
     private static final String JOB_QUEUE = "jobqueue";
 
-    //HttpUrlNode pattern --> Class
     private Map<Long, Class> urlPatternMap = new HashMap<Long, Class>();
     private List<Long> unResolveList = new ArrayList<Long>();
 
@@ -110,7 +110,7 @@ public class RedisJobQueue implements IQueue {
     }
 
     //抛弃state --> 分布式下没法管理一个job的状态:是新开始的任务还是重试的任务
-    public boolean putJob(IJob job, int state) {
+    public synchronized boolean putJob(IJob job, int state) {
 
         if (!JobManagerConfig.enablePutSpiderToQueue) {
             return false;
@@ -149,35 +149,41 @@ public class RedisJobQueue implements IQueue {
         return true;
     }
 
-    private String lastUnsolvedStr = null;
 
-    public IJob getJob() {
+    int MAX_UNRESOLVE_NUM = 30;
+
+
+    private IJob getJob(int tryTime) {
+
         if (!JobManagerConfig.enableGetSpiderFromQueue) {
             return null;
         }
 
-        LogManager.info("try Get Spider ");
         String spiderStr = jedis.rpop(JOB_QUEUE);
         if (spiderStr == null) {
+            LogManager.info("try get spider but queue is empty,return null");
             return null;
         }
 
-        HttpUrlNode node = gson.fromJson(spiderStr, HttpUrlNode.class);
+        HttpUrlNode node = null;
+        try {
+            node = gson.fromJson(spiderStr, HttpUrlNode.class);
+        } catch (Exception e) {
+
+            LogManager.info("getJob decodeJson error,get another one");
+            return getJob(tryTime + 1);
+        }
+
         long hash = node.toPatternKey();
+        if (unResolveList.contains(hash)) {
+            jedis.lpush(JOB_QUEUE, spiderStr); //无法解析的重新放入job queue
 
-        if (unResolveList.contains(hash)) {  //避免多次调用getHandleableClassOf
-            //LogManager.info("Get Spider, Can't resolve node: " + node.toString() + " ,get another one");
-            jedis.lpush(JOB_QUEUE, spiderStr);
-
-            if (lastUnsolvedStr == null) {
-                lastUnsolvedStr = spiderStr;
-                return getJob();
-            } else if (lastUnsolvedStr.equals(spiderStr)) { //走了一个循环了
-                LogManager.info("Seems run into a loop,sleep...");
+            if (tryTime >= MAX_UNRESOLVE_NUM) {  //Fix StackOverFlow
+                LogManager.info("too many times can't get a node,return null");
                 return null;
-            } else {
-                return getJob();
             }
+
+            return getJob(tryTime + 1);
         }
 
         if (!urlPatternMap.containsKey(hash)) {
@@ -185,39 +191,28 @@ public class RedisJobQueue implements IQueue {
             if (clazz == null) {
                 unResolveList.add(hash);
 
-                LogManager.info("Get Spider, Can't resolve node: " + node.toString() + " ,get another one");
                 jedis.lpush(JOB_QUEUE, spiderStr);
-
-                if (lastUnsolvedStr == null) {
-                    lastUnsolvedStr = spiderStr;
-                    return getJob();
-                } else if (lastUnsolvedStr.equals(spiderStr)) { //走了一个循环了
-                    LogManager.info("Seems run into a loop,sleep...");
+                if (tryTime >= MAX_UNRESOLVE_NUM) {
+                    LogManager.info("too many times can't get a node,return null");
                     return null;
-                } else {
-                    return getJob();
                 }
 
+                return getJob(tryTime + 1);
+
             } else {
-                urlPatternMap.put(hash, clazz);
+                urlPatternMap.put(hash, clazz);  //找到hash对应的spider class
             }
         }
 
         Method fromUrl = SpiderMethodManager.getFromUrlMethod(urlPatternMap.get(hash));
         if (fromUrl == null) {   //有可能为null
             unResolveList.add(hash);
-            LogManager.info("Get Spider, Can't resolve node: " + node.toString() + " ,get another one");
             jedis.lpush(JOB_QUEUE, spiderStr);
-
-            if (lastUnsolvedStr == null) {
-                lastUnsolvedStr = spiderStr;
-                return getJob();
-            } else if (lastUnsolvedStr.equals(spiderStr)) { //走了一个循环了
-                LogManager.info("Seems run into a loop,sleep...");
+            if (tryTime >= MAX_UNRESOLVE_NUM) {  //Fix StackOverFlow
+                LogManager.info("too many times can't get a node,return null");
                 return null;
-            } else {
-                return getJob();
             }
+            return getJob(tryTime + 1);
         }
 
         try {
@@ -230,11 +225,18 @@ public class RedisJobQueue implements IQueue {
             return job;
         } catch (IllegalAccessException e) {
 
+            return getJob(tryTime + 1);
+
         } catch (InvocationTargetException e) {
+            return getJob(tryTime + 1);
 
         }
+    }
 
-        return null;
+    //允许返回空值 须判空
+    @Nullable
+    public synchronized IJob getJob() {
+        return getJob(1);
     }
 
 
