@@ -88,26 +88,6 @@ public class RedisJobQueue implements IQueue {
 
     }
 
-    public boolean putJob(IJob job, boolean forceDispatch) {
-        if (!JobManagerConfig.enablePutSpiderToQueue) {
-            return false;
-        }
-
-        BaseSpider spider = (BaseSpider) job.getRealRunnable();
-        HttpUrlNode urlNode = spider.toUrlNode();
-
-        if (urlNode == null) {
-            return false;
-        }
-
-        String key = String.valueOf(urlNode.toRedisKey());
-        jedis.set(key, "true");
-        String json = gson.toJson(urlNode);
-        jedis.lpush(JOB_QUEUE, json);
-
-        LogManager.info("Success Put Spider: " + spider.name());
-        return true;
-    }
 
     //抛弃state --> 分布式下没法管理一个job的状态:是新开始的任务还是重试的任务
     public synchronized boolean putJob(IJob job, int state) {

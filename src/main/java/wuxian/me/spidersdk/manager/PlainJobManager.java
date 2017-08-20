@@ -124,12 +124,9 @@ public class PlainJobManager implements HeartbeatManager.IHeartBeat, IJobManager
         return queue.putJob(job, IJob.STATE_INIT);
     }
 
-    public boolean putJob(@NotNull IJob job, boolean forceDispatch) {
-        if (!started) {
-
-            return false;
-        }
-        return queue.putJob(job, forceDispatch);
+    //这里不实现
+    public boolean putJob(@NotNull IJob job, boolean runImmediately) {
+        return putJob(job);
     }
 
     public IJob getJob() {

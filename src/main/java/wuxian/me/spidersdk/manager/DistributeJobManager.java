@@ -204,29 +204,46 @@ public class DistributeJobManager implements IJobManager, HeartbeatManager.IHear
     private List<IJob> delayJobs = new ArrayList<IJob>();
 
     public boolean putJob(@NotNull IJob job) {
-        if (!started) {
-            synchronized (delayJobs) {
-                delayJobs.add(job);
-            }
-            return false;
-        }
-        return queue.putJob(job, IJob.STATE_INIT);
+        return putJob(job, false);
     }
 
-    public boolean putJob(@NotNull IJob job, boolean forceDispatch) {
+    //保留一个本地list 用于执行优先级高的任务
+    public boolean putJob(@NotNull IJob job, boolean runImmediately) {
+
         if (!started) {
             synchronized (delayJobs) {
                 delayJobs.add(job);
             }
             return false;
         }
-        return queue.putJob(job, forceDispatch);
+
+        if (!runImmediately) {
+            return queue.putJob(job, IJob.STATE_INIT);
+        } else {
+            synchronized (localJobs) {
+                localJobs.add(job);
+            }
+            return true;
+        }
     }
+
+    private List<IJob> localJobs = new ArrayList<IJob>();
+
 
     public IJob getJob() {
         if (!started) {
             return null;
         }
+        if (!localJobs.isEmpty()) {
+            synchronized (localJobs) {
+                if (!localJobs.isEmpty()) {
+                    IJob job = localJobs.get(0);
+                    localJobs.remove(0);
+                    return job;
+                }
+            }
+        }
+
         IJob job = queue.getJob();
         return job;
     }

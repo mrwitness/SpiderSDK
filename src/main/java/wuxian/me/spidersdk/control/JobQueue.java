@@ -25,10 +25,6 @@ public class JobQueue implements IQueue {
         this.monitor = monitor;
     }
 
-    //Todo
-    public boolean putJob(IJob job, boolean forceDispatch) {
-        return false;
-    }
 
     public boolean putJob(IJob job, int state) {
         LogManager.debug("putJob: " + job.toString());
