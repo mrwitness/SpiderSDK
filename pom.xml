@@ -6,10 +6,25 @@
 
     <groupId>wuxian.me</groupId>
     <artifactId>spidersdk</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>2.0</version>
 
     <dependencies>
-
+	<dependency>  
+            <groupId>com.alibaba</groupId>  
+            <artifactId>dubbo</artifactId>  
+            <version>2.5.3</version>  
+            <exclusions>  
+                <exclusion>  
+                    <groupId>org.springframework</groupId>  
+                    <artifactId>spring</artifactId>  
+                </exclusion>  
+            </exclusions>  
+        </dependency>  
+        <dependency>  
+            <groupId>com.github.sgroschupf</groupId>  
+            <artifactId>zkclient</artifactId>  
+            <version>0.1</version>  
+        </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
