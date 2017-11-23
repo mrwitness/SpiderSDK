@@ -18,9 +18,9 @@ public class BytesCharsetDetector {
 
         String encoding = detector.getDetectedCharset();
         if (encoding != null) {
-            System.out.println("Detected encoding = " + encoding);
+            //System.out.println("Detected encoding = " + encoding);
         } else {
-            System.out.println("No encoding detected.");
+            //System.out.println("No encoding detected.");
             encoding = defaultEncoding;
         }
 
