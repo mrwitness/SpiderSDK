@@ -1,7 +1,6 @@
 *.iml
 .idea
 lib
-util
 target
 logs
 htmls
