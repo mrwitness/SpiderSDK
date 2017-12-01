@@ -1,4 +1,4 @@
-# SpiderSDK
+# SpiderSDK [Deprecated] 效率太慢而且不大好用,准备重新写一个了
 
 ### 运行模式
 1 单机模式(不推荐使用 能力较弱)                        
@@ -46,7 +46,7 @@ BaseSpider.checkBlockAndFailThisSpider(String) //根据网页内容判断是否�
 分布式spider使用redis作为任务队列,因此需要序列化反序列化。这里使用两个静态函数约束实现spider扫描。注意在jobmanager.properties下,加上spiderScan=your-package有助于准确扫描。 
                
 
-2.2 实现SpiderCallback子类 --> 其实没什么用,可以统一参考[LagouSpider](https://github.com/xiaoshenke/Hangzhou-IT-Corp/tree/master/LagouSpider)的实现                 
+
 2.3 开启任务池                
 
 ````
@@ -61,12 +61,12 @@ jobManager.putJob(job);
 
 ````   
 
-更多使用方法,可参考[LagouSpider](https://github.com/xiaoshenke/Hangzhou-IT-Corp/tree/master/LagouSpider)。
+
 
 ### 局限
 1 目前该SDK仅支持mac环境，linux下并无测试。      
 2 分布式模式下需要安装redis。                    
-3 更强的分布式能力还在开发中,见[SpiderMaster](https://github.com/xiaoshenke/SpiderMaster)
+
 
 
 
